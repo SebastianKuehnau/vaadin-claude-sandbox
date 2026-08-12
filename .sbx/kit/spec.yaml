@@ -1,0 +1,29 @@
+schemaVersion: "2"
+kind: mixin
+name: my-project
+displayName: my-project dev environment
+description: Java 25 toolchain, network access for Maven, Vaadin and Github
+
+# Examplary script to install a specific java version
+#setup:
+#  install:
+#    - command: "sdk install java 25.0.4-tem || true"
+#      user: "1000"
+
+setup:
+  install:
+    - command: "claude plugin marketplace add vaadin/agent-marketplace && claude plugin install vaadin-skills@vaadin-marketplace"
+      user: "1000"
+
+permissions:
+  network:
+    allow:
+    - repo.maven.apache.org
+    - repo1.maven.org
+    - central.sonatype.com
+    - github.com
+    - codeload.github.com
+    - raw.githubusercontent.com
+    - mcp.vaadin.com
+    - www.javadocs.dev
+    - vaadin.com
