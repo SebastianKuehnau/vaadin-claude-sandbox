@@ -12,8 +12,10 @@ Adjust the Java version in `.sbx/kit/spec.yaml` to match your project.
 
 A Docker Sandbox is a disposable VM built for coding agents: its own kernel behind a hypervisor boundary, its own Docker daemon, a firewall that denies by default, and nothing shared with the host except the project folder. That's what makes --dangerously-skip-permissions a reasonable thing to type.
 
-## Usage
+## Prerequisites
+Docker Sandboxes — brew install docker/tap/sbx, then sbx login.
 
+## Usage
 Create the sandbox the first time with:
 
 ```sh
