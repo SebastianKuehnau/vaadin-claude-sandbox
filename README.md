@@ -1,11 +1,6 @@
 # vaadin-claude-sandbox
 
-A template for Vaadin projects that use Docker Sandboxes for agentic programming with Claude Code.
-
-## What this is
-
-A ready-to-copy [Docker Sandbox](https://docs.docker.com/ai/sandboxes/) kit for
-Vaadin projects. Copy `.sbx/kit` into your own project and you get a sandbox with:
+A ready-to-copy [Docker Sandbox](https://docs.docker.com/ai/sandboxes/) kit for Vaadin projects. Copy `.sbx/kit` into your own project and you get a sandbox with:
 
 - a Java toolchain installed via SDKMAN
 - a network allowlist for Maven Central, GitHub, npm, and `mcp.vaadin.com`
