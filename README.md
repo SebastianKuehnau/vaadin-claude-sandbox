@@ -1,4 +1,4 @@
-# claude-sandboxed
+# vaadin-claude-sandbox
 
 A template for Vaadin projects that use Docker Sandboxes for agentic
 programming with Claude Code.
