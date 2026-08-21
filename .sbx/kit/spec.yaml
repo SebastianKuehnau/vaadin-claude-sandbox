@@ -1,29 +1,46 @@
 schemaVersion: "2"
 kind: mixin
-name: my-project
-displayName: my-project dev environment
-description: Java 25 toolchain, network access for Maven, Vaadin and Github
-
-# Examplary script to install a specific java version
-#setup:
-#  install:
-#    - command: "sdk install java 25.0.4-tem || true"
-#      user: "1000"
+name: Vaadin Sandbox Example
+displayName: Vaadin dev environment
+description: >-
+  Vaadin skills and MCP, Maven/Vaadin/GitHub network access, Playwright browsers,
+  and access to an Ollama running on the host.
 
 setup:
   install:
+    # Brings the Vaadin skills *and* the Vaadin MCP — no `sbx mcp add` needed.
     - command: "claude plugin marketplace add vaadin/agent-marketplace && claude plugin install vaadin-skills@vaadin-marketplace"
       user: "1000"
+
+    # No browsers in the image. `--with-deps` needs root; `agent` has passwordless sudo.
+    # Drop this step if the project has no browser tests.
+    - command: "sudo npx --yes playwright install --with-deps chromium"
+      user: "1000"
+
+environment:
+  variables:
+    # Base image ships a JDK but leaves JAVA_HOME unset. Symlink, not the
+    # versioned dir, which names both JDK version and CPU architecture.
+    JAVA_HOME: "/usr/lib/jvm/default-java"
 
 permissions:
   network:
     allow:
-    - repo.maven.apache.org
-    - repo1.maven.org
-    - central.sonatype.com
-    - github.com
-    - codeload.github.com
-    - raw.githubusercontent.com
-    - mcp.vaadin.com
-    - www.javadocs.dev
-    - vaadin.com
+      # Maven. No `mvn` in the image; the wrapper downloads it from here.
+      - repo.maven.apache.org
+      - repo1.maven.org
+      - central.sonatype.com
+
+      # Claude plugin marketplace and install.
+      - github.com
+      - codeload.github.com
+      - raw.githubusercontent.com
+
+      # Vaadin docs, MCP, Javadoc.
+      - vaadin.com
+      - mcp.vaadin.com
+      - www.javadocs.dev
+
+      # Playwright browsers: primary host plus the installer's fallback.
+      - cdn.playwright.dev
+      - playwright.download.prss.microsoft.com
