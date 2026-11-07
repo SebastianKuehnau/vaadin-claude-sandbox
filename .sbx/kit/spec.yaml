@@ -3,8 +3,8 @@ schemaVersion: "3"
 kind: mixin
 displayName: Vaadin dev environment
 description: >-
-  Vaadin skills and MCP, Maven/Vaadin/GitHub network access, Playwright browsers,
-  and access to an Ollama running on the host.
+  JDK 25, Vaadin skills and MCP, Maven/Vaadin/GitHub network access, and
+  Playwright browsers.
 
 # Schema v3 (sbx v0.51.0+). The first line is load-bearing: without it sbx parses
 # this file as a Dockerfile. The claude workload (docker.io/sbx/claude, Debian 13)
