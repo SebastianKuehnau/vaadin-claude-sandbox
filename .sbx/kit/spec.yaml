@@ -1,46 +1,104 @@
-schemaVersion: "2"
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
 kind: mixin
-name: Vaadin Sandbox Example
 displayName: Vaadin dev environment
 description: >-
   Vaadin skills and MCP, Maven/Vaadin/GitHub network access, Playwright browsers,
   and access to an Ollama running on the host.
 
-setup:
-  install:
-    # Brings the Vaadin skills *and* the Vaadin MCP — no `sbx mcp add` needed.
-    - command: "claude plugin marketplace add vaadin/agent-marketplace && claude plugin install vaadin-skills@vaadin-marketplace"
-      user: "1000"
+# Schema v3 (sbx v0.51.0+). The first line is load-bearing: without it sbx parses
+# this file as a Dockerfile. The claude workload (docker.io/sbx/claude, Debian 13)
+# ships no JDK and no Node, so the install hooks below provide both.
+#
+# Install hooks see only PATH, HOME and a few shell basics; any other variable
+# must be listed in the hook's `env:`. The install phase has its own network
+# allowlist, closed before the agent starts.
 
-    # No browsers in the image. `--with-deps` needs root; `agent` has passwordless sudo.
-    # Drop this step if the project has no browser tests.
-    - command: "sudo npx --yes playwright install --with-deps chromium"
-      user: "1000"
+# v3 has no `environment:` block; a container variable is an arg with `env:`.
+args:
+  # A symlink, not the versioned dir, which names both JDK version and CPU
+  # architecture. The install hook below creates it.
+  javaHome:
+    default: /usr/lib/jvm/default-java
+    description: JAVA_HOME inside the sandbox
+    env: JAVA_HOME
 
-environment:
-  variables:
-    # Base image ships a JDK but leaves JAVA_HOME unset. Symlink, not the
-    # versioned dir, which names both JDK version and CPU architecture.
-    JAVA_HOME: "/usr/lib/jvm/default-java"
+capabilities:
+  - type: com.docker.sandbox/network-policy@1
+    config:
+      # Open only while the install hooks run.
+      install:
+        allow:
+          # apt: the two sources the claude image configures.
+          - deb.debian.org
+          - dhi.io
 
-permissions:
-  network:
-    allow:
-      # Maven. No `mvn` in the image; the wrapper downloads it from here.
-      - repo.maven.apache.org
-      - repo1.maven.org
-      - central.sonatype.com
+          # Claude plugin marketplace and install.
+          - github.com
+          - codeload.github.com
+          - raw.githubusercontent.com
 
-      # Claude plugin marketplace and install.
-      - github.com
-      - codeload.github.com
-      - raw.githubusercontent.com
+          # npx fetching Playwright, and the browsers it downloads. Chromium itself
+          # comes from Chrome for Testing on storage.googleapis.com — a broad host,
+          # which is why it is allowed for the install phase only.
+          - registry.npmjs.org
+          - cdn.playwright.dev
+          - playwright.download.prss.microsoft.com
+          - storage.googleapis.com
 
-      # Vaadin docs, MCP, Javadoc.
-      - vaadin.com
-      - mcp.vaadin.com
-      - www.javadocs.dev
+      runtime:
+        allow:
+          # Maven. No `mvn` in the image; the wrapper downloads it from here.
+          - repo.maven.apache.org
+          - repo1.maven.org
+          - central.sonatype.com
 
-      # Playwright browsers: primary host plus the installer's fallback.
-      - cdn.playwright.dev
-      - playwright.download.prss.microsoft.com
+          # Claude plugin marketplace and install.
+          - github.com
+          - codeload.github.com
+          - raw.githubusercontent.com
+
+          # Vaadin docs, MCP, Javadoc.
+          - vaadin.com
+          - mcp.vaadin.com
+          - www.javadocs.dev
+
+          # Playwright browsers: primary host plus the installer's fallback.
+          - cdn.playwright.dev
+          - playwright.download.prss.microsoft.com
+
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      install:
+        # Change the Java version here. The image's ca-certificates-java leaves
+        # the JDK's truststore empty until update-ca-certificates runs; without it
+        # every Maven download fails with "trustAnchors parameter must be
+        # non-empty". Node is here for Playwright's installer only.
+        - description: Install JDK 25 and Node
+          user: "0"
+          command: |
+            set -e
+            apt-get update -qq
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends openjdk-25-jdk-headless ca-certificates-java nodejs npm
+            update-ca-certificates -f
+            ln -sfn "$(ls -d /usr/lib/jvm/java-25-openjdk-*)" /usr/lib/jvm/default-java
+
+        # Brings the Vaadin skills *and* the Vaadin MCP — no `sbx mcp add` needed.
+        - description: Install the Vaadin Claude plugin
+          user: "1000"
+          command: "claude plugin marketplace add vaadin/agent-marketplace && claude plugin install vaadin-skills@vaadin-marketplace"
+
+        # No browsers in the image. The system libraries need root, the browser
+        # itself belongs in the agent's ~/.cache — so two steps, as two users.
+        # Drop both if the project has no browser tests.
+        #
+        # HOME=/root is load-bearing: hooks inherit the image's HOME
+        # (/home/agent) whatever their user, so without it root's npx writes a
+        # root-owned ~/.npm into the agent's home and the next step fails with
+        # EACCES.
+        - description: Install Playwright's system dependencies
+          user: "0"
+          command: "HOME=/root npx --yes playwright install-deps chromium"
+        - description: Install the Playwright browser
+          user: "1000"
+          command: "npx --yes playwright install chromium"
