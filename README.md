@@ -2,9 +2,10 @@
 
 A ready-to-copy [Docker Sandbox](https://docs.docker.com/ai/sandboxes/) kit for Vaadin projects. Copy `.sbx/kit` into your own project and you get a sandbox with:
 
-- JDK 25, installed from Debian when the sandbox is created
-- a network allowlist for Maven Central, GitHub, npm, and `mcp.vaadin.com`
-- a `CLAUDE.md` with project conventions for the agent
+- JDK 25, installed from Debian when the sandbox is created, with `JAVA_HOME` set
+- the Vaadin skills and MCP server for Claude Code (`vaadin-skills` plugin)
+- Playwright with Chromium, for browser tests
+- a network allowlist for Maven Central, GitHub, and Vaadin's docs, MCP and Javadoc hosts
 
 Adjust the Java version in the "Install JDK" hook of `.sbx/kit/spec.yaml` to match your project.
 
